@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs/promises');
@@ -108,10 +109,10 @@ const newTalkerRateAuthentication = (req, res, next) => {
   const { talk } = req.body;
   const { rate } = talk;
 
-  if (!rate) { return res.status(400).json({ message: 'O campo "rate" é obrigatório' }); }
   if (rate < 1 || rate > 5) { 
     return res.status(400).json({ message: 'O campo "rate" deve ser um inteiro de 1 à 5' }); 
   }
+  if (!rate) { return res.status(400).json({ message: 'O campo "rate" é obrigatório' }); }
 
   next();
 };
@@ -133,6 +134,28 @@ app.post('/talker',
     fs.writeFile('./talker.json', cTalkers);
 
     res.status(201).json(nTalkers[nTalkers.length - 1]);
+});
+
+app.put('/talker/:id',
+middlewareAuthorization,
+newTalkerNameAuthentication, 
+newTalkerAgeAuthentication,
+newTalkerTalkAuthentication,
+newTalkerRateAuthentication,
+newTalkerEmailAuthentication,
+  async (req, res) => {
+  const { id } = req.params;
+  const { name, age, talk } = req.body;
+  const talkers = await fs.readFile('./talker.json');
+  const cTalkers = JSON.parse(talkers);
+  const newId = Number(id);
+  const itemSelected = cTalkers.filter((element) => element.id !== Number(id));
+  itemSelected.push({ name, age, id: newId, talk });
+  const nTalkers = JSON.stringify(itemSelected);
+  fs.writeFile('./talker.json', nTalkers);
+  console.log(itemSelected);
+
+  res.status(200).json(itemSelected[itemSelected.length - 1]);
 });
 
 // não remova esse endpoint, e para o avaliador funcionar
