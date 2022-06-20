@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs/promises');
 const crypto = require('crypto');
+const moment = require('moment');
 
 const app = express();
 app.use(bodyParser.json());
@@ -66,7 +67,7 @@ const newTalkerNameAuthentication = (req, res, next) => {
   const { name } = req.body;
   
   if (!name) { return res.status(400).json({ message: 'O campo "name" é obrigatório' }); }
-  if (name < 3) { 
+  if (name.length < 3) { 
     return res.status(400).json({ message: 'O "name" deve ter pelo menos 3 caracteres' }); 
   }
 
@@ -85,12 +86,17 @@ const newTalkerAgeAuthentication = (req, res, next) => {
 
 const newTalkerTalkAuthentication = (req, res, next) => {
   const { talk } = req.body;
-  const { watchedAt } = talk;
   if (!talk) { return res.status(400).json({ message: 'O campo "talk" é obrigatório' }); }
+  next();
+};
+
+const newTalkerEmailAuthentication = (req, res, next) => {
+  const { talk } = req.body;
+  const { watchedAt } = talk;
   if (!watchedAt) { 
     return res.status(400).json({ message: 'O campo "watchedAt" é obrigatório' }); 
   }
-  if (watchedAt instanceof Date) { 
+  if (!moment(watchedAt, 'DD/MM/YYYY', true).isValid()) { 
     return (
       res.status(400).json({ message: 'O campo "watchedAt" deve ter o formato "dd/mm/aaaa"' })
     );
@@ -116,13 +122,17 @@ app.post('/talker',
   newTalkerAgeAuthentication,
   newTalkerTalkAuthentication,
   newTalkerRateAuthentication,
-  (req, res) => {
+  newTalkerEmailAuthentication,
+  async (req, res) => {
     const { name, age, talk } = req.body;
-    const talkers = './talker.json';
+    const talkers = await fs.readFile('./talker.json');
     const nTalkers = JSON.parse(talkers);
-    nTalkers.push(req.body);
+    const newId = nTalkers[nTalkers.length - 1].id;
+    nTalkers.push({ id: newId + 1, name, age, talk });
+    const cTalkers = JSON.stringify(nTalkers);
+    fs.writeFile('./talker.json', cTalkers);
 
-    res.status(201).json({ name, age, talk });
+    res.status(201).json(nTalkers[nTalkers.length - 1]);
 });
 
 // não remova esse endpoint, e para o avaliador funcionar
