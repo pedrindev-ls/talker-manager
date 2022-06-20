@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs/promises');
@@ -24,16 +23,24 @@ const middlewareAuthorization = (req, res, next) => {
   next();
 };
 
-app.get('/talker', async (_req, res) => {
+const readingTalker = async () => {
   const talkers = await fs.readFile('./talker.json');
   const cTalkers = JSON.parse(talkers);
+  return cTalkers;
+};
+
+const writingTalker = async (file) => {
+  fs.writeFile('./talker.json', file);
+};
+
+app.get('/talker', async (_req, res) => {
+  const cTalkers = await readingTalker();
   res.status(200).json(cTalkers);
 });
 
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
-  const talkers = await fs.readFile('./talker.json');
-  const cTalkers = JSON.parse(talkers);
+  const cTalkers = await readingTalker();
   const itemSelected = cTalkers.find((element) => element.id === Number(id));
 
   if (!itemSelected) { 
@@ -126,12 +133,11 @@ app.post('/talker',
   newTalkerEmailAuthentication,
   async (req, res) => {
     const { name, age, talk } = req.body;
-    const talkers = await fs.readFile('./talker.json');
-    const nTalkers = JSON.parse(talkers);
+    const nTalkers = await readingTalker();
     const newId = nTalkers[nTalkers.length - 1].id;
     nTalkers.push({ id: newId + 1, name, age, talk });
     const cTalkers = JSON.stringify(nTalkers);
-    fs.writeFile('./talker.json', cTalkers);
+    writingTalker(cTalkers);
 
     res.status(201).json(nTalkers[nTalkers.length - 1]);
 });
@@ -146,14 +152,12 @@ newTalkerEmailAuthentication,
   async (req, res) => {
   const { id } = req.params;
   const { name, age, talk } = req.body;
-  const talkers = await fs.readFile('./talker.json');
-  const cTalkers = JSON.parse(talkers);
+  const cTalkers = await readingTalker();
   const newId = Number(id);
   const itemSelected = cTalkers.filter((element) => element.id !== Number(id));
   itemSelected.push({ name, age, id: newId, talk });
   const nTalkers = JSON.stringify(itemSelected);
-  fs.writeFile('./talker.json', nTalkers);
-  console.log(itemSelected);
+  writingTalker(nTalkers);
 
   res.status(200).json(itemSelected[itemSelected.length - 1]);
 });
