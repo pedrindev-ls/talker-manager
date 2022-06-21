@@ -38,6 +38,16 @@ app.get('/talker', async (_req, res) => {
   res.status(200).json(cTalkers);
 });
 
+app.get('/talker/search',
+middlewareAuthorization,
+  async (req, res) => {
+    const { q } = req.query;
+    const cTalkers = await readingTalker();
+    const itemSelected = cTalkers.filter((element) => element.name.includes(q));
+
+    return res.status(200).json(itemSelected);
+});
+
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
   const cTalkers = await readingTalker();
