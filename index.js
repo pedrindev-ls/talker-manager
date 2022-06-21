@@ -150,16 +150,28 @@ newTalkerTalkAuthentication,
 newTalkerRateAuthentication,
 newTalkerEmailAuthentication,
   async (req, res) => {
-  const { id } = req.params;
-  const { name, age, talk } = req.body;
-  const cTalkers = await readingTalker();
-  const newId = Number(id);
-  const itemSelected = cTalkers.filter((element) => element.id !== Number(id));
-  itemSelected.push({ name, age, id: newId, talk });
-  const nTalkers = JSON.stringify(itemSelected);
-  writingTalker(nTalkers);
+    const { id } = req.params;
+    const { name, age, talk } = req.body;
+    const cTalkers = await readingTalker();
+    const newId = Number(id);
+    const itemSelected = cTalkers.filter((element) => element.id !== Number(id));
+    itemSelected.push({ name, age, id: newId, talk });
+    const nTalkers = JSON.stringify(itemSelected);
+    writingTalker(nTalkers);
 
-  res.status(200).json(itemSelected[itemSelected.length - 1]);
+    res.status(200).json(itemSelected[itemSelected.length - 1]);
+});
+
+app.delete('/talker/:id',
+middlewareAuthorization,
+  async (req, res) => {
+    const { id } = req.params;
+    const cTalkers = await readingTalker();
+    const itemSelected = cTalkers.filter((element) => element.id !== Number(id));
+    const nTalkers = JSON.stringify(itemSelected);
+    writingTalker(nTalkers);
+
+    res.status(204).end();
 });
 
 // não remova esse endpoint, e para o avaliador funcionar
